@@ -1,0 +1,7 @@
+boto3==1.34.0
+# If you’re using IAM auth with MSK from Python, you’ll likely use an MSK IAM SASL signer + kafka client.
+# Pick one approach below depending on your preferred lib:
+#
+# Option A: Confluent client + aws msk iam signer (common pattern)
+confluent-kafka==2.3.0
+aws-msk-iam-sasl-signer-python==1.0.1
