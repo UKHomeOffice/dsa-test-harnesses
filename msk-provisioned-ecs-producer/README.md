@@ -5,19 +5,19 @@ This module is responsible for creating an ECS cluster that runs a Python applic
 ## Usage
 ```hcl
 module "msk_harness" {
-  source = "git::https://<repo_url>.git//msk-provisioned-ecs-producer?ref=<commit_hash>"
+  source = "git::https://<repo_url>/dsa-test-harness.git//modules/msk-provisioned-ecs-producer?ref=<commit_hash>"
 
   name = "msk-producer"
 
-  vpc_id = "vpc-123456"
+  vpc_id = var.vpc_id
 
   # Pick a block you know is unused in the VPC
-  private_subnet_supernet_cidr = "10.10.64.0/20"
+  private_subnet_supernet_cidr = "10.111.38.0/23"
 
   # Use one route table for all 3, or provide 3
   private_route_table_ids = ["rtb-aaa"]
 
-  ecr_repository_name = "test-harness-producers"
+  ecr_repository_name = var.ecr_repository_name
   image_tag           = "roro-001"
 
   producer_topic = "msk_topic_1"
@@ -39,5 +39,39 @@ module "msk_harness" {
 }
 ```
 
-# 
+## MSK Configuration
+
+
+## ECS Configuration
 All producer configuration is passed to the ECS task as environment variables. Any value may be overriden using ecs_environment.
+
+## Calculating private_subnet_supernet_cidr
+As part of the LZA process, Core Cloud team vends AWS accounts that contain an IPAM pool. This makes it much easier to calculate which address space is available in your VPC using the AWS CLI.
+
+aws ec2 allocate-ipam-pool-cidr \
+  --ipam-pool-id ipam-pool-xxxxxxxx \
+  --netmask-length 23 \
+  --preview-next-cidr \
+  --region eu-west-2
+
+This should display output similar to:
+
+{
+    "IpamPoolAllocation": {
+        "Cidr": "10.111.38.0/23",
+        "ResourceType": "custom",
+        "ResourceOwner": "123456789100"
+    }
+}
+
+This is purely informational. As long as you use an aws_vpc_ipam_pool_cidr resource above this module call in your Terraform, you don't need to run this command to get the CIDR yourself. e.g.
+```hcl
+resource "aws_vpc_ipam_pool_cidr" "harness" {
+  ipam_pool_id   = var.ipam_pool_id
+  netmask_length = 23
+}
+
+private_subnet_supernet_cidr = aws_vpc_ipam_pool_cidr.harness.cidr
+```
+
+For the ECS -> MSK test harness, we need IPs for the MSK broker ENIs, and for the ECS ENIs. We should be able to use a netmask of /23, which contains 512 total IPs. To spread across 3 AZs, the clean split is to carve the /23 into four /25 subnets (adding 2 bits creates 4 subnets). Each /25 subnet has 123 usable IPs (AWS reserves 5 per subnet), which is enough for our temporary test harness and a few extra resources if we need them.
