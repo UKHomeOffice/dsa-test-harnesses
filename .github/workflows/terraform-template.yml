@@ -1,0 +1,118 @@
+name: terraform-template
+
+on:
+  workflow_call:
+    inputs:
+      WORKING_DIRECTORY:
+        required: true
+        type: string
+#    secrets:
+#      INFRACOST_API_KEY:
+#        required: true
+#      TERRAFORM_STATE_BUCKET:
+#        required: true
+#      TERRAFORM_STATE_KEY:
+#        required: true
+#      TERRAFORM_STATE_DYNAMODB_TABLE:
+#        required: true
+
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: ${{ inputs.WORKING_DIRECTORY }}
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v3.2.0
+
+#      - name: configure-aws-credentials
+#        uses: aws-actions/configure-aws-credentials@v1
+#        with:
+#          aws-region: eu-west-2
+
+      - name: setup-terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: terraform-init
+        run: terraform init # -backend-config=bucket=${{ secrets.TERRAFORM_STATE_BUCKET }} -backend-config=key=${{ secrets.TERRAFORM_STATE_KEY }} -backend-config=dynamodb_table=${{ secrets.TERRAFORM_STATE_DYNAMODB_TABLE }}
+
+#      - name: Setup Infracost
+#        if: github.event_name == 'pull_request'
+#        uses: infracost/actions/setup@v2
+#        with:
+#          api-key: ${{ secrets.INFRACOST_API_KEY }}
+      
+
+#      - name: Generate Infracost cost estimate baseline
+#        if: github.event_name == 'pull_request'
+#        run: |
+#          infracost breakdown --path . \
+#                              --sync-usage-file --usage-file /tmp/ignore.yml \
+#                              --format=json \
+#                              --out-file=/tmp/infracost-base.json
+
+#      - name: Generate Infracost diff
+#        if: github.event_name == 'pull_request'
+#        run: |
+#          infracost diff --path . \
+#                          --format=json \
+#                          --compare-to=/tmp/infracost-base.json \
+#                          --out-file=/tmp/infracost.json
+#
+#      - name: Post Infracost comment
+#        if: github.event_name == 'pull_request'
+#        run: |
+#          infracost comment github --path=/tmp/infracost.json \
+#                                   --repo=$GITHUB_REPOSITORY \
+#                                   --github-token=${{ secrets.GITHUB_TOKEN }} \
+#                                   --pull-request=${{github.event.pull_request.number}} \
+#                                   --behavior=hide-and-new
+      - name: terraform-plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -lock=false -no-color -input=false -out=tfplan
+        continue-on-error: true
+
+      - name: Install terraform-plan-summary
+        if: github.event_name == 'pull_request'
+        run: |
+          REPO="dineshba/terraform-plan-summary"
+          curl -LO https://github.com/$REPO/releases/latest/download/tf-summarize_linux_amd64.zip
+          tmpDir=$(mktemp -d -t tmp.XXXXXXXXXX)
+          mv tf-summarize_linux_amd64.zip $tmpDir
+          cd $tmpDir
+          unzip tf-summarize_linux_amd64.zip
+          chmod +x tf-summarize
+          echo $PWD >> $GITHUB_PATH
+
+      - name: tf-summarize-draw-table
+        if: github.event_name == 'pull_request'
+        id: summary-table
+        run: |
+          rm -rf tf-summarize-table-output.md
+          echo "## tf-summarize output:" > tf-summarize-table-output.md
+          echo "" >> tf-summarize-table-output.md
+          terraform show -json tfplan | tf-summarize -md >> tf-summarize-table-output.md
+
+      - name: create-comment-with-terraform-plan-summary
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: "${{ inputs.WORKING_DIRECTORY }}/tf-summarize-table-output.md"
+
+      - name: terraform-plan-status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: terraform-apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve
+
