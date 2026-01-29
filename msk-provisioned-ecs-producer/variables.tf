@@ -10,18 +10,45 @@ variable "tags" {
   default     = {}
 }
 
+#----------------------------------------------------------
+# Networking
+#----------------------------------------------------------
+
 variable "vpc_id" {
   description = "Existing VPC ID."
   type        = string
 }
 
-variable "azs" {
-  description = "AZs to use for new private subnets (must align with cidrs)."
-  type        = list(string)
+variable "private_subnet_supernet_cidr" {
+  description = <<-EOT
+    A CIDR block (that is unused in the VPC) from which the module will carve out
+    three private subnets (one per AZ). Example: 10.10.64.0/20.
+
+    The module will split this block into three /22 subnets by default if the
+    supernet is /20 (because /20 -> /22 gives 4 subnets; we use the first 3).
+  EOT
+  type        = string
 }
 
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks for the new private subnets."
+variable "private_subnet_newbits" {
+  description = <<-EOT
+    Number of additional prefix bits to add when splitting the supernet into subnets.
+
+    For example, if private_subnet_supernet_cidr is /20:
+      newbits = 2 produces /22 subnets (4 total; we use 3)
+      newbits = 3 produces /23 subnets (8 total; we use 3)
+  EOT
+  type        = number
+  default     = 2
+}
+
+variable "private_route_table_ids" {
+  description = <<-EOT
+    Existing private route table IDs to associate to the newly created private subnets.
+    Must be either:
+      - length 3 (one per subnet/AZ), or
+      - length 1 (the same route table used for all three subnets).
+  EOT
   type        = list(string)
 }
 
@@ -29,6 +56,10 @@ variable "private_route_table_ids" {
   description = "Existing private route table IDs to associate to the new subnets (same length as private_subnet_cidrs)."
   type        = list(string)
 }
+
+#----------------------------------------------------------
+# MSK
+#----------------------------------------------------------
 
 variable "msk_kafka_version" {
   description = "Kafka version for MSK provisioned cluster."
@@ -54,6 +85,10 @@ variable "msk_ebs_volume_size" {
   default     = 1000
 }
 
+#----------------------------------------------------------
+# ECR / ECS
+#----------------------------------------------------------
+
 variable "ecr_repository_name" {
   description = "Existing ECR repository name (not ARN)."
   type        = string
@@ -77,7 +112,19 @@ variable "ecs_memory" {
   default     = 512
 }
 
-variable "desired_count" {
+variable "ecs_environment" {
+  description = <<-EOT
+    Additional environment variables to pass to the ECS container.
+
+    These values are merged with the module's default environment variables and
+    can be used to override any default (e.g. ACKS, LINGER_MS) or to introduce
+    new variables consumed by the producer script.
+  EOT
+  type        = map(string)
+  default     = {}
+}
+
+variable "ecs_desired_count" {
   description = "ECS service desired count."
   type        = number
   default     = 1
@@ -89,14 +136,65 @@ variable "producer_topic" {
   default     = "test-topic"
 }
 
-variable "message_interval_seconds" {
-  description = "How often to produce messages."
-  type        = number
-  default     = 1
-}
-
 variable "log_retention_days" {
   description = "CloudWatch log retention."
   type        = number
   default     = 14
+}
+
+#----------------------------------------------------------
+# App-level vars, overrideable via ecs_environment
+#----------------------------------------------------------
+
+variable "messages_per_sec" {
+  description = "Target total message production rate (messages per second)."
+  type        = string
+  default     = "10"
+}
+
+variable "batch_size" {
+  description = "Number of messages produced per loop iteration."
+  type        = string
+  default     = "1"
+}
+
+variable "null_prob" {
+  description = "Probability (0.0–1.0) that nullable union fields will be emitted as null."
+  type        = string
+  default     = "0.35"
+}
+
+variable "acks" {
+  description = "Kafka producer acknowledgement level (e.g. all, 1, 0)."
+  type        = string
+  default     = "all"
+}
+
+variable "linger_ms" {
+  description = "Time (in milliseconds) the producer will wait to batch messages before sending."
+  type        = string
+  default     = "20"
+}
+
+variable "retries" {
+  description = "Number of retry attempts for failed Kafka produce requests."
+  type        = string
+  default     = "10"
+}
+
+variable "compression" {
+  description = <<-EOT
+    Compression codec used by the Kafka producer.
+
+    Supported values depend on the client library and typically include:
+    snappy, gzip, lz4, zstd, or none.
+  EOT
+  type        = string
+  default     = "snappy"
+}
+
+variable "max_request_size" {
+  description = "Maximum Kafka produce request size in bytes."
+  type        = string
+  default     = "2097152" # 2 MiB
 }

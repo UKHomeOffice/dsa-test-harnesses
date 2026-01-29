@@ -25,12 +25,7 @@ resource "aws_ecs_task_definition" "producer" {
       image     = docker_registry_image.producer.name
       essential = true
 
-      environment = [
-        { name = "TOPIC", value = var.producer_topic },
-        { name = "INTERVAL_SECONDS", value = tostring(var.message_interval_seconds) },
-        # For IAM auth on MSK, you typically use the IAM bootstrap brokers.
-        { name = "BOOTSTRAP_BROKERS", value = aws_msk_cluster.this.bootstrap_brokers_sasl_iam }
-      ]
+      environment = local.container_env_list
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -50,7 +45,7 @@ resource "aws_ecs_service" "producer" {
   name            = "${var.name}-producer"
   cluster         = aws_ecs_cluster.this.id
   task_definition = aws_ecs_task_definition.producer.arn
-  desired_count   = var.desired_count
+  desired_count   = var.ecs_desired_count
   launch_type     = "FARGATE"
 
   network_configuration {
