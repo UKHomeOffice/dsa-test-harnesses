@@ -52,11 +52,6 @@ variable "private_route_table_ids" {
   type        = list(string)
 }
 
-variable "private_route_table_ids" {
-  description = "Existing private route table IDs to associate to the new subnets (same length as private_subnet_cidrs)."
-  type        = list(string)
-}
-
 #----------------------------------------------------------
 # MSK
 #----------------------------------------------------------
