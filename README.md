@@ -1,18 +1,3 @@
-# github-terraform-template
-
-This repo contains a template Terraform pipeline. To modify this template, please either create an issue or submit a pull request with the changes.
-
-### terraform-checks.yml ###
-This workflow will run when any new commit is pushed to any branch. The tools run are listed below.
-
-| Tool              | Description              |
-|-------------------|--------------------------|
-| terraform fmt     | format terraform         |
-| terraform validate | validate terraform       |
-| tflnt             | lint terraform           |
-| tfsec             | run static code analysis |
-| checkov           | run static code analysis |
-
 # 🧪 dsa-test-harnesses
 
 A collection of **Terraform-based AWS test harnesses** designed to deploy realistic, repeatable infrastructure for **testing data pipelines, streaming architectures, and integration scenarios** on AWS.
