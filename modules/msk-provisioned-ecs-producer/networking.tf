@@ -17,8 +17,8 @@ resource "aws_subnet" "private" {
 }
 
 resource "aws_route_table_association" "private" {
-  for_each = aws_subnet.private
+  count = local.len_private_subnets
 
-  subnet_id      = each.value.id
-  route_table_id = local.private_route_table_ids[tonumber(each.key)]
+  subnet_id      = element(aws_subnet.private[*].id, count.index)
+  route_table_id = local.private_route_table_ids[tonumber(count.index)]
 }

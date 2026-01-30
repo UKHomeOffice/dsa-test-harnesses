@@ -18,7 +18,7 @@ locals {
   base_env = {
     TOPIC             = var.producer_topic
     BOOTSTRAP_SERVERS = aws_msk_cluster.this.bootstrap_brokers_sasl_iam
-    AWS_REGION        = data.aws_region.current.name
+    AWS_REGION        = local.region
 
     # Your tuning defaults (first-class vars)
     MESSAGES_PER_SEC = var.messages_per_sec
