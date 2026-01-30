@@ -10,7 +10,7 @@ locals {
 
   image_name = "${data.aws_ecr_repository.repo.repository_url}:${var.image_tag}"
 
-  merged_tags = merge(var.tags, { "Module" = "msk-provisioned-ecs-producer", "Name" = var.name })
+  merged_tags = merge(var.tags, { "terraform-location" = "dsa-test-harnesses/msk-provisioned-ecs-producer" })
 }
 
 locals {

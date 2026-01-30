@@ -2,14 +2,26 @@ resource "aws_security_group" "msk" {
   name        = "${var.name}-msk-sg"
   description = "MSK broker SG"
   vpc_id      = var.vpc_id
-  tags        = local.merged_tags
+
+  tags = merge(
+    local.merged_tags,
+    {
+      Name = "${var.name}-msk-sg"
+    }
+  )
 }
 
 resource "aws_security_group" "ecs" {
   name        = "${var.name}-ecs-sg"
   description = "ECS tasks SG"
   vpc_id      = var.vpc_id
-  tags        = local.merged_tags
+
+  tags = merge(
+    local.merged_tags,
+    {
+      Name = "${var.name}-ecs-sg"
+    }
+  )
 }
 
 # Allow ECS -> MSK (SASL/IAM over TLS = 9098)
