@@ -22,7 +22,7 @@ resource "aws_ecs_task_definition" "producer" {
   container_definitions = jsonencode([
     {
       name      = "producer"
-      image     = docker_registry_image.producer.name
+      image     = docker_image.producer.name
       essential = true
 
       environment = local.container_env_list

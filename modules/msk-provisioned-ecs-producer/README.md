@@ -7,7 +7,7 @@ This module is responsible for creating an ECS cluster that runs a Python applic
 module "msk_harness" {
   source = "git::https://<repo_url>/dsa-test-harness.git//modules/msk-provisioned-ecs-producer?ref=<commit_hash>"
 
-  name = "msk-producer"
+  name = var.name
 
   vpc_id = var.vpc_id
 
@@ -18,7 +18,6 @@ module "msk_harness" {
   private_route_table_ids = ["rtb-aaa"]
 
   ecr_repository_name = var.ecr_repository_name
-  image_tag           = "roro-001"
 
   producer_topic = "msk_topic_1"
 
