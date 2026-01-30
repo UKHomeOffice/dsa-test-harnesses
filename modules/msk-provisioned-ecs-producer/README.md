@@ -10,9 +10,8 @@ module "msk_harness" {
   name = var.name
 
   vpc_id = var.vpc_id
-
-  # Pick a block you know is unused in the VPC
-  private_subnet_supernet_cidr = "10.111.38.0/23"
+  
+  private_subnets_cidr = var.private_subnets_cidr
 
   # Use one route table for all 3, or provide 3
   private_route_table_ids = ["rtb-aaa"]

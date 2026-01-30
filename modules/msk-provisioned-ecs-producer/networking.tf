@@ -1,20 +1,19 @@
 resource "aws_subnet" "private" {
-  for_each = {
-    for idx in range(3) : idx => {
-      cidr = local.private_subnet_cidrs[idx]
-      az   = local.azs[idx]
-    }
-  }
+  count = local.len_private_subnets
 
-  vpc_id                  = var.vpc_id
-  cidr_block              = each.value.cidr
-  availability_zone       = each.value.az
-  map_public_ip_on_launch = false
+  region = local.region
 
-  tags = merge(local.merged_tags, {
-    Name = "${var.name}-private-${each.value.az}"
-    Tier = "private"
-  })
+  availability_zone    = length(regexall("^[a-z]{2}-", element(local.azs, count.index))) > 0 ? element(local.azs, count.index) : null
+  availability_zone_id = length(regexall("^[a-z]{2}-", element(local.azs, count.index))) == 0 ? element(local.azs, count.index) : null
+  cidr_block           = element(concat(var.private_subnets, [""]), count.index)
+  vpc_id               = var.vpc_id
+
+  tags = merge(
+    {
+      Name = local.private_subnet_names[count.index]
+    },
+    local.merged_tags
+  )
 }
 
 resource "aws_route_table_association" "private" {

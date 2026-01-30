@@ -19,27 +19,11 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "private_subnet_supernet_cidr" {
-  description = <<-EOT
-    A CIDR block (that is unused in the VPC) from which the module will carve out
-    three private subnets (one per AZ). Example: 10.10.64.0/20.
-
-    The module will split this block into three /22 subnets by default if the
-    supernet is /20 (because /20 -> /22 gives 4 subnets; we use the first 3).
-  EOT
-  type        = string
-}
-
-variable "private_subnet_newbits" {
-  description = <<-EOT
-    Number of additional prefix bits to add when splitting the supernet into subnets.
-
-    For example, if private_subnet_supernet_cidr is /20:
-      newbits = 2 produces /22 subnets (4 total; we use 3)
-      newbits = 3 produces /23 subnets (8 total; we use 3)
-  EOT
-  type        = number
-  default     = 2
+variable "private_subnets" {
+  description = "CIDR blocks for private subnets."
+  type        = list(string)
+  nullable    = true
+  default     = [null]
 }
 
 variable "private_route_table_ids" {

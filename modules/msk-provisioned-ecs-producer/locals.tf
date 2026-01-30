@@ -1,10 +1,9 @@
 locals {
-  azs = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs    = data.aws_availability_zones.available.names
+  region = data.aws_region.current.region
 
-  # Generate 3 subnet CIDRs from the provided supernet.
-  private_subnet_cidrs = [
-    for i in range(3) : cidrsubnet(var.private_subnet_supernet_cidr, var.private_subnet_newbits, i)
-  ]
+  len_private_subnets  = length(var.private_subnets)
+  private_subnet_names = [for az in local.azs : format("%s-private-%s", var.name, az)]
 
   # Allow either 1 route table (reused) or 3 (one per subnet)
   private_route_table_ids = length(var.private_route_table_ids) == 1 ? [for _ in range(3) : var.private_route_table_ids[0]] : var.private_route_table_ids
