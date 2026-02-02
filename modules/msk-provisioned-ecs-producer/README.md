@@ -2,10 +2,13 @@
 
 This module is responsible for creating an ECS cluster that runs a Python application in a Docker container. This Python application is run inside an ECS Task, and writes data to a specified Kafka Topic in MSK. The Amazon MSK cluster, private subnets to host ECS and MSK, and required IAM roles are all deployed by this module.
 
+## Architecture of Deployed Module
+![System Architecture](docs/architecture.svg)
+
 ## Usage
 ```hcl
 module "msk_harness" {
-  source = "git::https://<repo_url>/dsa-test-harness.git//modules/msk-provisioned-ecs-producer?ref=<commit_hash>"
+  source = "git::https://github.com/UKHomeOffice/dsa-test-harnesses.git//modules/msk-provisioned-ecs-producer?ref=<commit_hash>"
 
   name = var.name
 
