@@ -10,18 +10,14 @@ This module is responsible for creating an ECS cluster that runs a Python applic
 module "msk_harness" {
   source = "git::https://github.com/UKHomeOffice/dsa-test-harnesses.git//modules/msk-provisioned-ecs-producer?ref=<commit_hash>"
 
-  name = var.name
-
+  name   = var.name
   vpc_id = var.vpc_id
-  
-  private_subnets_cidr = var.private_subnets_cidr
 
-  # Use one route table for all 3, or provide 3
+  private_subnets_cidr    = var.private_subnets_cidr
   private_route_table_ids = ["rtb-aaa"]
 
-  ecr_repository_name = var.ecr_repository_name
-
-  producer_topic = "msk_topic_1"
+  image          = var.ecs_task_image
+  producer_topic = var.msk_topic
 
   # Either use first-class vars...
   messages_per_sec  = "25"
@@ -41,38 +37,13 @@ module "msk_harness" {
 ```
 
 ## MSK Configuration
-
+This module deploys an Amazon MSK provisioned cluster across a set of 3 x private subnets (also created as part of this module), using IAM auth and TLS for encryption using a KMS key (deployed as part of the module). A CloudWatch Logs group is created and linked to the cluster for capturing logs.
 
 ## ECS Configuration
+This module creates a new ECS cluster, complete with service, task definition, and both of the required IAM roles. The container image used by the ECS task needs to be passed in from the module call, having been pre-built and sent to an ECR repository already.
+
+We take the image as a parameter to the module so that we separate the application deployment and infrastructure deployment. Otherwise if we tried to deploy everything via Terraform, including the build and push of a container image to ECR, we would tie the application deployments to the infrastructure. A better solution is to build and push the image to ECR in a GitHub actions workflow, then have a secondary workflow that deploys this module over the top, taking the image you just built as an input. 
+
+A CloudWatch Logs group is created and linked to the cluster for capturing logs.
+
 All producer configuration is passed to the ECS task as environment variables. Any value may be overriden using ecs_environment.
-
-## Calculating private_subnet_supernet_cidr
-As part of the LZA process, Core Cloud team vends AWS accounts that contain an IPAM pool. This makes it much easier to calculate which address space is available in your VPC using the AWS CLI.
-
-aws ec2 allocate-ipam-pool-cidr \
-  --ipam-pool-id ipam-pool-xxxxxxxx \
-  --netmask-length 23 \
-  --preview-next-cidr \
-  --region eu-west-2
-
-This should display output similar to:
-
-{
-    "IpamPoolAllocation": {
-        "Cidr": "10.111.38.0/23",
-        "ResourceType": "custom",
-        "ResourceOwner": "123456789100"
-    }
-}
-
-This is purely informational. As long as you use an aws_vpc_ipam_pool_cidr resource above this module call in your Terraform, you don't need to run this command to get the CIDR yourself. e.g.
-```hcl
-resource "aws_vpc_ipam_pool_cidr" "harness" {
-  ipam_pool_id   = var.ipam_pool_id
-  netmask_length = 23
-}
-
-private_subnet_supernet_cidr = aws_vpc_ipam_pool_cidr.harness.cidr
-```
-
-For the ECS -> MSK test harness, we need IPs for the MSK broker ENIs, and for the ECS ENIs. We should be able to use a netmask of /23, which contains 512 total IPs. To spread across 3 AZs, the clean split is to carve the /23 into four /25 subnets (adding 2 bits creates 4 subnets). Each /25 subnet has 123 usable IPs (AWS reserves 5 per subnet), which is enough for our temporary test harness and a few extra resources if we need them.

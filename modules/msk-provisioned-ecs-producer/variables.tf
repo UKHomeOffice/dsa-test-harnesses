@@ -68,15 +68,9 @@ variable "msk_ebs_volume_size" {
 # ECR / ECS
 #----------------------------------------------------------
 
-variable "ecr_repository_name" {
-  description = "Existing ECR repository name (not ARN)."
+variable "image" {
+  description = "Docker image to run on ECS."
   type        = string
-}
-
-variable "image_tag" {
-  description = "Docker image tag to build/push."
-  type        = string
-  default     = "latest"
 }
 
 variable "ecs_cpu" {
@@ -138,7 +132,7 @@ variable "batch_size" {
 }
 
 variable "null_prob" {
-  description = "Probability (0.0–1.0) that nullable union fields will be emitted as null."
+  description = "Probability (0.0 to 1.0) that nullable union fields will be emitted as null."
   type        = string
   default     = "0.35"
 }

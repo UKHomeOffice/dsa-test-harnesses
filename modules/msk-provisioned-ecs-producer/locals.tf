@@ -8,12 +8,8 @@ locals {
   # Allow either 1 route table (reused) or 3 (one per subnet)
   private_route_table_ids = length(var.private_route_table_ids) == 1 ? [for _ in range(3) : var.private_route_table_ids[0]] : var.private_route_table_ids
 
-  image_name = "${data.aws_ecr_repository.repo.repository_url}:${var.image_tag}"
-
   merged_tags = merge(var.tags, { "terraform-location" = "dsa-test-harnesses/msk-provisioned-ecs-producer" })
-}
 
-locals {
   # Required vars the container expects
   base_env = {
     TOPIC             = var.producer_topic
