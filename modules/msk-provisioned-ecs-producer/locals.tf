@@ -1,6 +1,7 @@
 locals {
-  azs    = data.aws_availability_zones.available.names
-  region = data.aws_region.current.region
+  azs        = data.aws_availability_zones.available.names
+  region     = data.aws_region.current.region
+  account_id = data.aws_caller_identity.current.account_id
 
   len_private_subnets  = length(var.private_subnets)
   private_subnet_names = [for az in local.azs : format("%s-private-%s", var.name, az)]
@@ -9,6 +10,9 @@ locals {
   private_route_table_ids = length(var.private_route_table_ids) == 1 ? [for _ in range(3) : var.private_route_table_ids[0]] : var.private_route_table_ids
 
   merged_tags = merge(var.tags, { "terraform-location" = "dsa-test-harnesses/msk-provisioned-ecs-producer" })
+
+  # MSK
+  topic_arn_prefix = "arn:aws:kafka:${local.region}:${local.account_id}:topic/${aws_msk_cluster.this.cluster_name}/${aws_msk_cluster.this.cluster_uuid}"
 
   # Required vars the container expects
   base_env = {

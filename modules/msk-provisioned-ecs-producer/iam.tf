@@ -29,7 +29,7 @@ resource "aws_iam_role" "ecs_task" {
   tags = local.merged_tags
 }
 
-# MSK IAM authorization policy (adjust as needed)
+# MSK IAM authorization policy
 resource "aws_iam_policy" "msk_access" {
   name        = "${var.name}-msk-access"
   description = "Allow ECS task to connect and write to MSK via IAM"
@@ -47,20 +47,27 @@ resource "aws_iam_policy" "msk_access" {
         Resource = "*"
       },
       # Data-plane (MSK IAM auth)
-      # NOTE: Resource patterns vary by feature set; keep broad for a harness.
       {
         Effect = "Allow"
         Action = [
           "kafka-cluster:Connect",
           "kafka-cluster:DescribeCluster",
-          "kafka-cluster:DescribeClusterDynamicConfiguration",
+          "kafka-cluster:DescribeClusterDynamicConfiguration"
+        ]
+        Resource = [
+          aws_msk_cluster.this.arn
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "kafka-cluster:DescribeTopic",
           "kafka-cluster:WriteData",
+          "kafka-cluster:WriteDataIdempotently",
           "kafka-cluster:ReadData"
         ]
         Resource = [
-          aws_msk_cluster.this.arn,
-          "${aws_msk_cluster.this.arn}/*"
+          "${local.topic_arn_prefix}/${var.producer_topic}"
         ]
       }
     ]

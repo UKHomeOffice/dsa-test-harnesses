@@ -36,6 +36,11 @@ output "msk_cluster_name" {
   value       = aws_msk_cluster.this.cluster_name
 }
 
+output "msk_cluster_uuid" {
+  description = "UUID of the MSK provisioned cluster."
+  value       = aws_msk_cluster.this.cluster_uuid
+}
+
 output "msk_kafka_version" {
   description = "Kafka version configured for the MSK cluster."
   value       = aws_msk_cluster.this.kafka_version
