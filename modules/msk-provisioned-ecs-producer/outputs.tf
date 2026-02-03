@@ -116,22 +116,8 @@ output "ecs_log_group_name" {
 }
 
 #---------------------------------------------------------------
-# ECR
-#---------------------------------------------------------------
-
-output "ecr_repository_url" {
-  description = "URL of the ECR repository used for the producer image."
-  value       = data.aws_ecr_repository.repo.repository_url
-}
-
-#---------------------------------------------------------------
 # Container
 #---------------------------------------------------------------
-
-output "image_uri" {
-  description = "Full image URI (repository URL plus tag) used by ECS."
-  value       = docker_image.producer.name
-}
 
 output "container_environment" {
   description = "Final set of environment variables passed to the ECS container (after merging defaults and overrides)."
