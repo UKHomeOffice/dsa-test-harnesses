@@ -6,7 +6,7 @@ locals {
   azs = length(var.availability_zone_names) == 3 ? var.availability_zone_names : slice(data.aws_availability_zones.available.names, 0, 3)
 
   # schedule enabled if non-null and non-empty
-  schedule_enabled = var.schedule_expression != null && trim(var.schedule_expression) != ""
+  schedule_enabled = var.schedule_expression != null && trimspace(var.schedule_expression) != ""
 
   # Packaging selection
   is_image = var.package_type == "Image"
