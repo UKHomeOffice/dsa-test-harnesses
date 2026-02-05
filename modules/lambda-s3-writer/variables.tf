@@ -43,16 +43,6 @@ variable "subnet_cidr_blocks" {
   description = "Exactly 3 CIDR blocks to create new private subnets. Mutually exclusive with subnet_ids."
   type        = list(string)
   default     = []
-
-  validation {
-    condition     = length(var.subnet_cidr_blocks) == 0 || length(var.subnet_cidr_blocks) == 3
-    error_message = "If subnet_cidr_blocks is provided, it must contain exactly 3 CIDR blocks."
-  }
-
-  validation {
-    condition     = !(length(var.subnet_ids) > 0 && length(var.subnet_cidr_blocks) > 0)
-    error_message = "Provide only one of subnet_ids or subnet_cidr_blocks (not both)."
-  }
 }
 
 variable "availability_zone_names" {
