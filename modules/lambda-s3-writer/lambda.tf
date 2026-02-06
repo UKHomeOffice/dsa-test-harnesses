@@ -50,15 +50,15 @@ resource "aws_lambda_function" "this" {
     precondition {
       condition = (
         # Image requirements
-        (!local.is_image || (var.image_uri != null && trimspace(var.image_uri) != "")) &&
+        (!local.is_image || try(trimspace(var.image_uri), "") != "") &&
 
         # Zip requirements
         (!local.is_zip || (
-          (!local.use_archive || (var.source_dir != null && trimspace(var.source_dir) != "")) &&
-          (!local.use_local_zip || (var.local_existing_package_path != null && trimspace(var.local_existing_package_path) != "")) &&
+          (!local.use_archive || try(trimspace(var.source_dir), "") != "") &&
+          (!local.use_local_zip || try(trimspace(var.local_existing_package_path), "") != "") &&
           (!local.use_s3_zip || (
-            (var.s3_existing_package_bucket != null && trimspace(var.s3_existing_package_bucket) != "") &&
-            (var.s3_existing_package_key != null && trimspace(var.s3_existing_package_key) != "")
+            try(trimspace(var.s3_existing_package_bucket), "") != "" &&
+            try(trimspace(var.s3_existing_package_key), "") != ""
           ))
         ))
       )
