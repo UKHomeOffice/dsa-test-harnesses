@@ -12,7 +12,8 @@ locals {
   merged_tags = merge(var.tags, { "terraform-location" = "dsa-test-harnesses/msk-provisioned-ecs-producer" })
 
   # MSK
-  topic_arn_prefix = "arn:aws:kafka:${local.region}:${local.account_id}:topic/${aws_msk_cluster.this.cluster_name}/${aws_msk_cluster.this.cluster_uuid}"
+  msk_topic_arn_prefix = "arn:aws:kafka:${local.region}:${local.account_id}:topic/${aws_msk_cluster.this.cluster_name}/${aws_msk_cluster.this.cluster_uuid}"
+  msk_group_arn_prefix = "arn:aws:kafka:${local.region}:${local.account_id}:group/${aws_msk_cluster.this.cluster_name}/${aws_msk_cluster.this.cluster_uuid}"
 
   # Required vars the container expects
   base_env = {

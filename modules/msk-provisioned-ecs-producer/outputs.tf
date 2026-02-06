@@ -71,6 +71,16 @@ output "msk_log_group_name" {
   value       = aws_cloudwatch_log_group.msk.name
 }
 
+output "msk_topic_arn_prefix" {
+  description = "ARN prefix for the MSK topic."
+  value       = local.msk_topic_arn_prefix
+}
+
+output "msk_group_arn_prefix" {
+  description = "ARN prefix for the MSK consumer group."
+  value       = local.msk_group_arn_prefix
+}
+
 #---------------------------------------------------------------
 # ECS
 #---------------------------------------------------------------

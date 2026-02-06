@@ -67,7 +67,7 @@ resource "aws_iam_policy" "msk_access" {
           "kafka-cluster:ReadData"
         ]
         Resource = [
-          "${local.topic_arn_prefix}/${var.producer_topic}"
+          "${local.msk_topic_arn_prefix}/${var.producer_topic}"
         ]
       }
     ]
