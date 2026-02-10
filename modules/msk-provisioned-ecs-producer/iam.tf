@@ -64,7 +64,8 @@ resource "aws_iam_policy" "msk_access" {
           "kafka-cluster:DescribeTopic",
           "kafka-cluster:WriteData",
           "kafka-cluster:WriteDataIdempotently",
-          "kafka-cluster:ReadData"
+          "kafka-cluster:ReadData",
+          "kafka-cluster:CreateTopic"
         ]
         Resource = [
           "${local.msk_topic_arn_prefix}/${var.producer_topic}"
