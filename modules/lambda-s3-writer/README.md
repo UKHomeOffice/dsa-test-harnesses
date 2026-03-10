@@ -196,7 +196,7 @@ No modules.
 | <a name="output_lambda_function_arn"></a> [lambda\_function\_arn](#output\_lambda\_function\_arn) | Lambda function ARN |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | Security group created for Lambda |
 | <a name="output_subnet_ids"></a> [subnet\_ids](#output\_subnet\_ids) | The 3 subnet IDs used by Lambda |
-| <a name="output_event_rule_arn"></a> [event\_rule\_arn](#output\_event\_rule\_arn) | EventBridge rule ARN (if enabled) |
+| <a name="output_event_schedule_arn"></a> [event\_rule\_arn](#output\_event\_schedule\_arn) | EventBridge schedule ARN (if enabled) |
 <!-- END_TF_DOCS -->
 
 ## Operational Notes

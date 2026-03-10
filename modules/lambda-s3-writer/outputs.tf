@@ -18,7 +18,7 @@ output "subnet_ids" {
   value       = local.effective_subnet_ids
 }
 
-output "event_rule_arn" {
-  description = "EventBridge rule ARN if schedule is enabled."
-  value       = try(aws_cloudwatch_event_rule.schedule[0].arn, null)
+output "event_schedule_arn" {
+  description = "EventBridge schedule ARN if schedule is enabled."
+  value       = try(aws_scheduler_schedule.schedule[0].arn, null)
 }
