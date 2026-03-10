@@ -68,24 +68,61 @@ resource "aws_lambda_function" "this" {
 }
 
 # Optional EventBridge schedule
-resource "aws_cloudwatch_event_rule" "schedule" {
-  count               = local.schedule_enabled ? 1 : 0
-  name                = "${var.name}-schedule"
-  schedule_expression = var.schedule_expression
-  tags                = var.tags
-}
-
-resource "aws_cloudwatch_event_target" "schedule" {
+resource "aws_iam_role" "schedule" {
   count = local.schedule_enabled ? 1 : 0
-  rule  = aws_cloudwatch_event_rule.schedule[0].name
-  arn   = aws_lambda_function.this.arn
+
+  name = "${var.name}-scheduler-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "scheduler.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = var.tags
 }
 
-resource "aws_lambda_permission" "allow_events" {
-  count         = local.schedule_enabled ? 1 : 0
-  statement_id  = "AllowExecutionFromEventBridge"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.this.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.schedule[0].arn
+resource "aws_iam_role_policy" "schedule" {
+  count = local.schedule_enabled ? 1 : 0
+
+  name = "${var.name}-scheduler-policy"
+  role = aws_iam_role.schedule[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = aws_lambda_function.this.arn
+      }
+    ]
+  })
+}
+
+resource "aws_scheduler_schedule" "schedule" {
+  count = local.schedule_enabled ? 1 : 0
+
+  name                = "${var.name}-schedule"
+  group_name          = "default"
+  schedule_expression = var.schedule_expression
+  state               = "ENABLED"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  target {
+    arn      = aws_lambda_function.this.arn
+    role_arn = aws_iam_role.schedule[0].arn
+  }
 }
